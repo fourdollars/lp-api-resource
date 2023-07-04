@@ -1,0 +1,62 @@
+#!/bin/bash
+
+set -euo pipefail
+IFS=$'\n\t'
+debug="false"
+
+exec 3>&1
+exec 1>&2
+
+payload="$(cat <&0)"
+
+debug=$(jq -r '.source.debug // "false"' <<< "$payload")
+
+if [ "$0" = '/opt/resource/out' ]; then
+    jq -n '{}' >&3  # noop
+    exit
+fi
+
+oauth_consumer_key=$(jq -r '.source.oauth_consumer_key // ""' <<< "$payload")
+oauth_token=$(jq -r '.source.oauth_token // ""' <<< "$payload")
+oauth_token_secret=$(jq -r '.source.oauth_token_secret // ""' <<< "$payload")
+
+export LAUNCHPAD_TOKEN="$oauth_token:$oauth_token_secret:$oauth_consumer_key"
+
+if [ "$debug" = "verbose" ]; then
+    set -x
+fi
+
+case "$0" in
+    ('/opt/resource/check')
+        jq -r '.source.check // ""' <<< "$payload" > /tmp/check.sh
+        # shellcheck source=/dev/null
+        source /tmp/check.sh
+        ;;
+    ('/opt/resource/in')
+        cd "$1"
+        jq -r '.params.get // ""' <<< "$payload" > /tmp/get.sh
+        if [ -s /tmp/get.sh ]; then
+            jq -r '.source.get // ""' <<< "$payload" > /tmp/get.sh
+        fi
+        # shellcheck source=/dev/null
+        source /tmp/get.sh
+        ;;
+    ('/opt/resource/out')
+        cd "$1"
+        script=$(jq -r '.params.script // ""' <<< "$payload")
+        if [ -s "$script" ]; then
+            cp "$script" /tmp/put.sh
+        else
+            jq -r '.params.put // ""' <<< "$payload" > /tmp/put.sh
+            if [ -s /tmp/put.sh ]; then
+                jq -r '.source.put // ""' <<< "$payload" > /tmp/put.sh
+            fi
+        fi
+        # shellcheck source=/dev/null
+        source /tmp/put.sh
+        ;;
+esac
+
+echo "$payload" >&3
+
+exit
