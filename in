@@ -41,7 +41,7 @@ case "$0" in
             cp "$script" /tmp/put.sh
         else
             jq -r '.params.put // ""' <<< "$payload" > /tmp/put.sh
-            if [ -s /tmp/put.sh ]; then
+            if [ ! -s /tmp/put.sh ]; then
                 jq -r '.source.put // ""' <<< "$payload" > /tmp/put.sh
             fi
         fi
