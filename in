@@ -43,7 +43,7 @@ case "$0" in
         ;;
     ('/opt/resource/out')
         cd "$1"
-        script=$(jq -r '.params.script // ""' <<< "$payload")
+        script=$(jq -r '.params.script // "/dev/null"' <<< "$payload")
         if [ -s "$script" ]; then
             cp "$script" /tmp/put.sh
         else
