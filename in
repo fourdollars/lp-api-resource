@@ -2,19 +2,11 @@
 
 set -euo pipefail
 IFS=$'\n\t'
-debug="false"
 
 exec 3>&1
 exec 1>&2
 
 payload="$(cat <&0)"
-
-debug=$(jq -r '.source.debug // "false"' <<< "$payload")
-
-if [ "$0" = '/opt/resource/out' ]; then
-    jq -n '{}' >&3  # noop
-    exit
-fi
 
 oauth_consumer_key=$(jq -r '.source.oauth_consumer_key // ""' <<< "$payload")
 oauth_token=$(jq -r '.source.oauth_token // ""' <<< "$payload")
@@ -22,7 +14,8 @@ oauth_token_secret=$(jq -r '.source.oauth_token_secret // ""' <<< "$payload")
 
 export LAUNCHPAD_TOKEN="$oauth_token:$oauth_token_secret:$oauth_consumer_key"
 
-if [ "$debug" = "verbose" ]; then
+debug=$(jq -r '.source.debug // "false"' <<< "$payload")
+if [ "$debug" = "true" ]; then
     set -x
 fi
 
