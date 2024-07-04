@@ -23,7 +23,7 @@ mkdir -p /usr/local/bin/
 cp -v /root/.local/share/go/bin/lp-api /usr/local/bin/
 rm -fr /root/.local/share/go /root/.cache/go-build
 apt-get autopurge --yes wget
-rm -fr /var/lib/apt
+rm -fr /var/lib/apt /var/lib/dpkg
 EOF
 ADD /check /opt/resource/check
 ADD /out /opt/resource/out
